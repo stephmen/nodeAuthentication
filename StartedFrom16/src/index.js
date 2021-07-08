@@ -7,6 +7,9 @@ import { fileURLToPath } from "url"
 import { connectDb } from "./db.js"
 import { registerUser } from "./accounts/register.js"
 import { authorizeUser } from "./accounts/authorize.js"
+import { logUserIn } from "./accounts/logUserIn.js"
+import { logUserOut } from "./accounts/logUserOut.js"
+import { getUserFromCookies } from "./accounts/user.js"
 
 // ESM specific features
 const __filename = fileURLToPath(import.meta.url)
@@ -14,7 +17,7 @@ const __dirname = path.dirname(__filename)
 
 const app = fastify()
 
-console.log(process.env.MONGO_URL)
+
 
 async function startApp() {
   try {
@@ -32,39 +35,94 @@ async function startApp() {
           request.body.email,
           request.body.password
         )
+        if (userId) {
+          await logUserIn(userId, request, reply)
+          reply.send({
+            data: {
+              status: "SUCCESS",
+              userId,
+            },
+          })
+        }
       } catch (e) {
         console.error(e)
+        reply.send({
+          data: {
+            status: "Failed",
+            
+          },
+        })
       }
     })
-
+    
     app.post("/api/authorize", {}, async (request, reply) => {
       try {
-        console.log(request.body.email, request.body.password)
-        const userId = await authorizeUser(
+     
+        const { isAuthorized, userId } = await authorizeUser(
           request.body.email,
           request.body.password
-        )
-        // Generate auth tokens
-        // Set cookies
-        reply
-          .setCookie("testCookie", "the value is this", {
-            path: "/",
-            domain: "localhost",
-            httpOnly: true,
+          )
+          if (isAuthorized) {
+            await logUserIn(userId, request, reply)
+            reply.send({
+              data: {
+                status: "SUCCESS",
+                userId,
+              },
+            })
+          }         
+        } catch (e) {
+          console.error(e)
+          reply.send({
+            data: {
+              status: "Failed",
+              
+            },
           })
-          .send({
-            data: "just testing",
-          })
-      } catch (e) {
-        console.error(e)
-      }
-    })
-
-    app.get("/test", {}, (request, reply) => {
-      console.log(request.cookies.testCookie)
-      reply.send({
-        data: "hello world",
+        }
       })
+      
+      app.post("/api/logout", {}, async (request, reply) => {
+        try {
+          await logUserOut(request, reply)
+          reply.send({
+            data: {
+              status: "SUCCESS",
+              userId,
+            },
+          })
+          }
+         catch (e) {
+          console.error(e)
+          reply.send({
+            data: {
+              status: "Failed",
+              
+            },
+          })
+        }
+      })
+
+    app.get("/test", {}, async (request, reply) => {
+      try {
+        
+        const user = await getUserFromCookies(request, reply)
+        // Return user email, if it exist, otherwise return unauthorized
+        if (user?._id) {
+          reply.send({
+            data: user,
+          })
+        }
+        else{
+          reply.send({
+            data: "User Lookup Failed",
+          })
+        }
+      } catch (e) {
+        throw new Error(e)
+
+      }
+      //verify user login
     })
 
     await app.listen(3000)
