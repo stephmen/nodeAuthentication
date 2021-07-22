@@ -1,22 +1,5 @@
 {
-  "name": "node-auth",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "type": "module",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "Scott Tolinski",
-  "license": "ISC",
   "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "crypto": "^1.0.1",
-    "dotenv": "^8.2.0",
-    "fastify": "^3.11.0",
-    "fastify-cookie": "^5.3.1",
-    "fastify-static": "^3.4.0",
-    "jsonwebtoken": "^8.5.1",
-    "mongodb": "^3.6.4"
+    "cassidy": "^0.0.2"
   }
 }
